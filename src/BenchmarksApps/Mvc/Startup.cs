@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.Certificate;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Mvc
 {
@@ -58,7 +60,12 @@ namespace Mvc
                 o.ValidateCertificateUse = false;
                 o.ValidateValidityPeriod = false;
             }).AddCertificateCache();
+#elif CUSTOMJWTAUTH
+            services.AddAuthentication("Jwt").AddScheme<AuthenticationSchemeOptions, CustomJwtAuth>("Jwt", _ => { });
+#elif COOKIEAUTH
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
 #endif
+
 
 #if AUTHORIZE
             services.AddAuthorization();
@@ -76,7 +83,7 @@ namespace Mvc
 
             app.UseRouting();
 
-#if JWTAUTH || CERTAUTH
+#if JWTAUTH || CERTAUTH || CUSTOMJWTAUTH
             logger.LogInformation("MVC is configured to use Authentication.");
             app.UseAuthentication();
 #endif
